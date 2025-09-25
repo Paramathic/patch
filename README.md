@@ -19,7 +19,7 @@ Paper: [https://arxiv.org/abs/XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)
 To clone the repository, run the following command:
 
 ```
-git clone --recurse-submodules https://github.com/Mohammad-Mozaffari/patch-dev.git
+git clone --recurse-submodules https://github.com/Paramathic/patch.git
 ```
 
 The `--recurse-submodules` flag is used to clone the [SLiM repository](https://github.com/Paramathic/slim/tree/main) as a submodule. The SLiM repository is located in the `slim_local` directory.
@@ -260,6 +260,10 @@ For LLaMA-2 7B and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , freezing sparse p
   - `mask_llm`: Whether to train with MaskLLM (2:4 mask only).
   - `layer_target`: Whether to apply target sparsity per layer.
 
+
+## Speedup Experiments
+
+We will provide the scipt for integrating [STOICC](https://github.com/Paramathic/stoicc) with PATCH for speedup experiments soon.
 
 ## Acknowledgement
 This repository is build upon the [SLiM](https://github.com/Paramathic/slim) repository.
