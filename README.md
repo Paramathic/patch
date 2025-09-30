@@ -8,7 +8,7 @@ This repository hosts the official implementation and datasets for PATCH (Prunin
 
 - *¹Equal contribution*
 
-Paper: [https://arxiv.org/abs/XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)
+Paper: [https://arxiv.org/abs/2509.23410](https://arxiv.org/abs/2509.23410)
 
 <div style="text-align: center;">
 <img src="./assets/PATCH-Logo.png" alt="PATCH" width="400">  
