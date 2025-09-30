@@ -1,3 +1,7 @@
+<div align="center">
+<img src="./assets/PATCH-Logo.png" alt="PATCH" width="400">  
+</div>
+
 # PATCH: Learnable Tile-level Hybrid Sparsity for LLMs
 
 This repository hosts the official implementation and datasets for PATCH (Pruning with a Learnable Tile-level Configuration for Hybrid Sparsity), featured in our paper. PATCH optimizes large language models (LLMs) by learning a structured mask on frozen weights, assigning tiles as dense (0% sparsity) or 2:4 sparse (50% sparsity) to achieve flexible sparsity ratios up to 50%. It narrows the performance gap to dense models and delivers up to 1.37× speedup on LLaMA-2 7B.
@@ -10,8 +14,8 @@ This repository hosts the official implementation and datasets for PATCH (Prunin
 
 Paper: [https://arxiv.org/abs/2509.23410](https://arxiv.org/abs/2509.23410)
 
-<div style="text-align: center;">
-<img src="./assets/PATCH-Logo.png" alt="PATCH" width="400">  
+<div align="center">
+<img src="./assets/PATCH-Pipeline.svg" alt="PATCH" width="800">  
 </div>
 
 ## Setup
