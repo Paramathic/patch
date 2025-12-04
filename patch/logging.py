@@ -167,7 +167,7 @@ def init_wandb(args):
                 f"WREG{args.weight_reg}",
             ]
         run_name = "_".join(name_parts)
-        project = "PATCH" if not args.mask_llm else "MaskLLM"
+        project = "Learnable Unstructured Sparsity"
         run = wandb.init(
             project=project,
             config=args,

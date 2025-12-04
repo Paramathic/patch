@@ -17,6 +17,7 @@ from .learnable_mask import (
     patch_tile_only,
     patch_joint,
     create_2_4_mask,
+    create_tile_mask,
 )
 from .mask_trainer import *
 import os
@@ -98,6 +99,7 @@ def fine_tune_mask(
     # Masking
     mask_tile_size=[128, 128],
     mask_llm=True,
+    unstructured=False,
     joint_training=False,
     # Logging
     log_wandb=False,
@@ -286,6 +288,28 @@ def fine_tune_mask(
 
             return generate_masks_pre_hook
 
+    elif unstructured:
+        mode = "unstructured"
+
+        def make_generate_masks_pre_hook(temp_scaler_controller_tile):
+            def generate_masks_pre_hook(self, input):
+                tau, scaler = temp_scaler_controller_tile.get()
+                for layer in self.modules():
+                    if isinstance(layer, torch.nn.Linear) and hasattr(
+                        layer, "tile_mask"
+                    ):
+                        new_mask = create_tile_mask(
+                            layer.tile_mask,
+                            hard_tile,
+                            tau,
+                            scaler,
+                            layer.tile_row_size,
+                            layer.tile_col_size,
+                        )
+                        layer.last_mask = new_mask
+
+            return generate_masks_pre_hook
+
     else:
         mode = "tile"
 
@@ -346,7 +370,7 @@ def fine_tune_mask(
             )
             controllers["temp_scaler_controller_2_4"] = ctrl_2_4
 
-        if mode in ("tile", "joint"):
+        if mode in ("tile", "joint", "unstructured"):
             ctrl_tile = TemperatureScalerController(
                 start_temp=temp_range_tile[0],
                 end_temp=temp_range_tile[1],
@@ -414,7 +438,11 @@ def fine_tune_mask(
                     tile_mask = tile_mask.repeat_interleave(
                         layer.tile_row_size, dim=0
                     ).repeat_interleave(layer.tile_col_size, dim=1)
-                    mask = (tile_mask + (1 - tile_mask) * mask_2_4).bool()
+
+                    if mode == "unstructured":
+                        mask = tile_mask
+                    else:
+                        mask = (tile_mask + (1 - tile_mask) * mask_2_4).bool()
 
                     del layer.tile_mask
                     del layer.tile_row_size
@@ -492,6 +520,8 @@ def learn_mask(
         mask_llm=mask_args.mask_llm,
         joint_training=mask_args.joint_optim,
         log_wandb=wandb,
+        unstructured=mask_args.unstructured,
+        max_train_samples=mask_args.max_train_samples,
     )
 
     return model, lm_eval_model

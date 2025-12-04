@@ -123,6 +123,28 @@ def _apply_tile_prior_(
     layer.tile_mask.data += (prior * std * strength).to(layer.tile_mask.device)
 
 
+def _apply_tile_prior_unstructured(layer: nn.Linear, compressed_layer, strength: float):
+    """
+    Uses compressed_layer.distribution_scores to bias tile logits toward desired density
+
+    Args:
+        layer (nn.Linear): The layer to apply the tile prior to
+        compressed_layer: The compressed layer to use for the prior
+        target_density (float): The target density for the tile prior
+        strength (float): The strength of the tile prior
+
+    Returns:
+        None
+    """
+    if strength <= 0:
+        return
+    prior = compressed_layer.distribution_scores
+    prior[prior == 0] = -1.0
+
+    std = torch.std(layer.tile_mask).detach().cpu()
+    layer.tile_mask.data += (prior * std * strength).to(layer.tile_mask.device)
+
+
 def _init_2_4_mask_from_prior(layer, compressed_layer, mask_choices, strength, dtype):
     """
     Transfer learning to 2:4 mask from one shot pruned compressed layers
@@ -218,7 +240,7 @@ def add_mask_parameters(
     Returns:
         None
     """
-    assert mode in {"mask_llm", "tile", "joint"}
+    assert mode in {"mask_llm", "tile", "joint", "unstructured"}
 
     with torch.no_grad():
         for model_layer, compressed_layer in zip(
@@ -249,13 +271,13 @@ def add_mask_parameters(
                     )
                 _bind_forward(model_layer, masked_forward)
 
-            if mode == "tile" or mode == "joint":
+            if mode in ("tile", "joint", "unstructured"):
                 # ----- Tile logits  -----
                 row_t, col_t = mask_tile_size
-                assert (row_t, col_t) != (
-                    1,
-                    1,
-                ), "For tile mode, provide mask_tile_size != (1,1)."
+                # assert (row_t, col_t) != (
+                #     1,
+                #     1,
+                # ), "For tile mode, provide mask_tile_size != (1,1)."
                 nrt, nct = _compute_tile_grid(W, row_t, col_t)
 
                 model_layer.tile_row_size = row_t
@@ -270,10 +292,17 @@ def add_mask_parameters(
                     model_layer.fixed_mask_2_4 = fixed_2_4.to(
                         device=device, dtype=dtype
                     )
-
-                _apply_tile_prior_(
-                    model_layer, compressed_layer, target_density, prior_strength_tile
-                )
+                if mode == "unstructured":
+                    _apply_tile_prior_unstructured(
+                        model_layer, compressed_layer, prior_strength_tile
+                    )
+                else:
+                    _apply_tile_prior_(
+                        model_layer,
+                        compressed_layer,
+                        target_density,
+                        prior_strength_tile,
+                    )
 
             _bind_forward(model_layer, masked_forward)
 

@@ -2,31 +2,32 @@
 
 # --- Configuration ---
 # Define the ranges for your hyperparameters
-LEARNING_RATES=("1e-3") # 0.1 0.5 0.25)
-REG_FACTORS=("2") # 1 3 5)
-TEMP_PAIRS=("4 0.05")
+LEARNING_RATES=("1e-2" "1e-3" "1e-4") # 0.1 0.5 0.25)
+REG_FACTORS=("3" "7") # 1 3 5)
+TEMP_PAIRS=("4 0.05" "2 0.05")
 SCALER_PAIRS=("100 500")
 TILE_TEMP_PAIRS=("4 0.05")
-TILE_SCALER_PAIRS=("25 350")
+TILE_SCALER_PAIRS=("25 350" "100 500")
 LOCAL_BATCH_SIZES_ADAM=1 # 4)
 OPTIMIZERS=("adamw_torch")
 INITIAL_SPARSITY=(0.5)
-TARGET_SPARSITY=(0.45) # 0.35)
+TARGET_SPARSITY=(0.5) # 0.35)
 COPY_DATA=false
-MASK_TILE_SIZE="128,128"
-SPARSITY_TYPE="2:4"
-PRUNING_METHOD="maskllm"
-MODEL_NAME=llama2
-FINE_TUNING_SEQUENCE_LENGTH=2048
-WEIGHT_REG=("0.05") # "0") # "4.25")
+MASK_TILE_SIZE="1,1"
+SPARSITY_TYPE="unstructured"
+PRUNING_METHOD="wanda"
+MODEL_NAME=qwen2.5
+FINE_TUNING_SEQUENCE_LENGTH=4096
+WEIGHT_REG=("0.1" "10") # "0") # "4.25")
 TILE_STRENGTH=("3")
 WEIGHT_STRENGTH=("3") 
 CLUSTER="trillium"
 PARALLELISM="data_parallel" # Options: data_parallel, model_parallel
 LEARNABLE_2_4_TILE=false
 MASKLLM_CHECKPOINT="Vinnnf/LLaMA-2-7B-MaskLLM-C4"
+MAX_TRAIN_SAMPLES=512000
 
-NGPUS_PER_NODE=4
+NGPUS_PER_NODE=1
 NTASKS_PER_NODE=$((12 * NGPUS_PER_NODE))
 MEM=$((64 * NGPUS_PER_NODE))
 
@@ -111,7 +112,7 @@ for lr in "${LEARNING_RATES[@]}"; do
                                                         --job-name="${JOB_NAME}" \
                                                         --gpus-per-node=${NGPUS_PER_NODE} \
                                                         --ntasks-per-node=${NTASKS_PER_NODE} \
-                                                        --mem=${MEM}G \
+                                                        --time=24:00:00 \
                                                         "${SLURM_SCRIPT}" \
                                                         "${lr}" \
                                                         "${reg}" \

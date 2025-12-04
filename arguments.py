@@ -143,6 +143,12 @@ def learnable_mask_args(parser):
     add("--mask_llm", action="store_true", help="Train with MaskLLM (2:4 mask only)")
 
     add("--layer_target", action="store_true", help="Apply target sparsity per layer")
+    add(
+        "--max_train_samples",
+        type=int,
+        default=512000,
+        help="Maximum number of training samples",
+    )
 
     return dests
 
@@ -209,4 +215,18 @@ def parse_args():
             "Please enable only one of the --mask_llm and --joint-optim options."
         )
 
+    args.learnable.unstructured = args.one_shot.sparsity_type == "unstructured"
+    assert (
+        sum(
+            [
+                args.learnable.unstructured,
+                args.learnable.mask_llm,
+                args.learnable.joint_optim,
+            ]
+        )
+        <= 1
+    )
+
+    if args.learnable.unstructured:
+        assert args.learnable.mask_tile_size == [1, 1]
     return args

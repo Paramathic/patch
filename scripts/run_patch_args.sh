@@ -32,6 +32,7 @@ TILE_END_SCALER="${22:-0}"
 PARALLELISM="${23:-data_parallel}"
 LEARNABLE_2_4_TILE="${24:-false}" # Default to false if not provided
 MASKLLM_CHECKPOINT="${25:-'Vinnnf/LLaMA-2-7B-MaskLLM-C4'}" # Default to 'Vinnnf/LLaMA-2-7B-MaskLLM-C4' if not provided
+MAX_TRAIN_SAMPLES="${26:-512000}"
 
 if [ "$LEARNABLE_2_4_TILE" = true ]; then
     LEARNABLE_2_4_TILE="--joint_optim"
@@ -105,4 +106,5 @@ $STARTER_CMD main_learnable_mask.py \
     --weight_reg $WEIGHT_REG \
     --prior_strength_tile $TILE_STRENGTH \
     $LEARNABLE_2_4_TILE \
-    --maskllm_checkpoint $MASKLLM_CHECKPOINT 
+    --maskllm_checkpoint $MASKLLM_CHECKPOINT \
+    --max_train_samples $MAX_TRAIN_SAMPLES 

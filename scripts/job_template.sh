@@ -32,6 +32,7 @@ ARG_CLUSTER="${24:-'trillium'}"
 ARG_PARALLELISM="${25:-data_parallel}"
 ARG_LEARNABLE_2_4_TILE="${26:-false}" # Default to false if not provided
 ARG_MASKLLM_CHECKPOINT="${27:-'Vinnnf/LLaMA-2-7B-MaskLLM-C4'}" # Default to 'Vinnnf/LLaMA-2-7B-MaskLLM-C4' if not provided
+ARG_MAX_TRAIN_SAMPLES="${28:-512000}"
 SCRIPT_TO_RUN=scripts/run_patch_args.sh
 
 
@@ -109,7 +110,7 @@ bash ${SINGULARITY_CMD} \
      "${ARG_MODEL_NAME}" "${ARG_FINE_TUNING_SEQUENCE_LENGTH}" "${ARG_WEIGHT_REG}" \
      "${ARG_TILE_STR}" "${ARG_WEIGHT_STR}" "${ARG_TILE_START_TEMP}" "${ARG_TILE_END_TEMP}" \
      "${ARG_TILE_START_SCALER}" "${ARG_TILE_END_SCALER}" "${ARG_PARALLELISM}" "${ARG_LEARNABLE_2_4_TILE}" \
-     "${ARG_MASKLLM_CHECKPOINT}"
+     "${ARG_MASKLLM_CHECKPOINT}" "${ARG_MAX_TRAIN_SAMPLES}"
 
 echo "Singularity execution finished successfully."
 echo "SLURM Job $SLURM_JOB_ID finished."
