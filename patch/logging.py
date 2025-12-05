@@ -146,20 +146,14 @@ def init_wandb(args):
         name_parts = [
             model_name,
             f"LR{args.lr}",
-            f"REG{args.reg_factor}",
+            f"REG{args.sparse_reg}",
             f"OPT{args.optimizer}",
             f"Prune-{args.prune_method}",
             f"Sparsity{args.sparsity_ratio}-{args.target_sparsity_ratio}",
-            f"T{args.temp_schedule[0]}-{args.temp_schedule[1]}",
-            f"S{args.scaler_schedule[0]}-{args.scaler_schedule[1]}",
-            f"STR{args.prior_strength}",
+            f"T{args.temp_schedule_tile[0]}-{args.temp_schedule_tile[1]}",
+            f"S{args.scaler_schedule_tile[0]}-{args.scaler_schedule_tile[1]}",
+            f"STR{args.prior_strength_tile}",
         ]
-        if args.joint_optim:
-            name_parts += [
-                f"TT{args.tile_temp_schedule[0]}-{args.tile_temp_schedule[1]}",
-                f"ST{args.tile_scaler_schedule[0]}-{args.tile_scaler_schedule[1]}",
-                f"TSTR{args.prior_strength_tile}",
-            ]
 
         if args.weight_reg > 0:
 
