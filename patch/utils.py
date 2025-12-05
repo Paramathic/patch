@@ -189,6 +189,7 @@ def evaluate(
     eval_dataset="wikitext2",
     eval_batch_size=1,
     test_lmharness=True,
+    rank=0,
 ):
     """
     Evaluates perplexity and accuracy over different tasks
@@ -201,6 +202,7 @@ def evaluate(
         eval_dataset (str): Dataset name or path for perplexity evaluation.
         eval_batch_size (int): Batch size for evaluation.
         test_lmharness (bool): If True, run LM Harness benchmark tasks.
+        rank (int): Rank of the current process in distributed setup.
 
     Returns:
         ppl_test (float): Computed perplexity (if `evaluate_perplexity` is True, else 0.0)
@@ -212,7 +214,7 @@ def evaluate(
     model.seqlen = seqlen
     ################################################################
     ppl_test = 0.0
-    if evaluate_perplexity:
+    if evaluate_perplexity and rank == 0:
         ppl_test = eval_ppl(
             model,
             tokenizer,
@@ -237,20 +239,25 @@ def evaluate(
             ],
             verbosity="ERROR",
         )
-        lmharness_results["mmlu"] = results["results"]["mmlu"]["acc,none"]
-        lmharness_results["piqa"] = results["results"]["piqa"]["acc,none"]
-        lmharness_results["arc_easy"] = results["results"]["arc_easy"]["acc,none"]
-        lmharness_results["arc_challenge"] = results["results"]["arc_challenge"][
-            "acc,none"
-        ]
-        lmharness_results["winogrande"] = results["results"]["winogrande"]["acc,none"]
-        lmharness_results["openbookqa"] = results["results"]["openbookqa"]["acc,none"]
-        average = []
-        for task in lmharness_results:
-            average.append(lmharness_results[task])
-        average = np.mean(average)
-        lmharness_results["average"] = average
-        print("LM Harness Results: ", lmharness_results)
+        if rank == 0:
+            lmharness_results["mmlu"] = results["results"]["mmlu"]["acc,none"]
+            lmharness_results["piqa"] = results["results"]["piqa"]["acc,none"]
+            lmharness_results["arc_easy"] = results["results"]["arc_easy"]["acc,none"]
+            lmharness_results["arc_challenge"] = results["results"]["arc_challenge"][
+                "acc,none"
+            ]
+            lmharness_results["winogrande"] = results["results"]["winogrande"][
+                "acc,none"
+            ]
+            lmharness_results["openbookqa"] = results["results"]["openbookqa"][
+                "acc,none"
+            ]
+            average = []
+            for task in lmharness_results:
+                average.append(lmharness_results[task])
+            average = np.mean(average)
+            lmharness_results["average"] = average
+            print("LM Harness Results: ", lmharness_results)
 
     return ppl_test, lmharness_results
 

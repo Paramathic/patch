@@ -440,7 +440,7 @@ def fine_tune_mask(
                     ).repeat_interleave(layer.tile_col_size, dim=1)
 
                     if mode == "unstructured":
-                        mask = tile_mask
+                        mask = tile_mask.bool()
                     else:
                         mask = (tile_mask + (1 - tile_mask) * mask_2_4).bool()
 

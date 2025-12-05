@@ -17,7 +17,6 @@ import wandb
 
 from transformers import AutoTokenizer
 from slim_local.slim.utils import report_gpu_memory, check_sparsity
-from slim_local.slim.quantization.quantization import attach_input_quantization_hooks
 from slim_local.utils.model import get_llm
 import torch.distributed as dist
 from arguments import parse_args
@@ -106,25 +105,19 @@ def main(args):
         if args.wandb:
             wandb.log({"Model Sparsity Ratio": sparsity_ratio})
 
-        ################################################################
-        if args.quantize_input:
-            print("Enabling input quantization:")
-            attach_input_quantization_hooks(
-                model,
-                args.input_bitwidth,
-                args.input_group_size,
-            )
-        ################################################################
+    ################################################################
+    ppl_test, lmharness_results = evaluate(
+        model,
+        lm_eval_model,
+        tokenizer,
+        args.evaluate_perplexity,
+        args.eval_dataset,
+        args.eval_batch_size,
+        args.test_lmharness,
+        rank=rank,
+    )
 
-        ppl_test, lmharness_results = evaluate(
-            model,
-            lm_eval_model,
-            tokenizer,
-            args.evaluate_perplexity,
-            args.eval_dataset,
-            args.eval_batch_size,
-            args.test_lmharness,
-        )
+    if rank == 0:
 
         if args.output_csv_path:
             add_result_to_csv(args, ppl_test, lmharness_results)
