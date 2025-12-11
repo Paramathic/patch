@@ -83,6 +83,11 @@ def main(args):
             args.learnable.mask_tile_size,
             checkpoint_name,
         )
+        run_name = (
+            f"saved_models/{args.model.split('/')[-1]}_"
+            f"{args.one_shot.prune_method}_{args.one_shot.sparsity_type}_"
+            f"{args.one_shot.sparsity_ratio}_{args.learnable.target_sparsity_ratio}"
+        )
         model, lm_eval_model = learn_mask(
             model_name=args.model,
             local_files_only=args.local_files_only,
@@ -91,6 +96,7 @@ def main(args):
             tokenizer=tokenizer,
             mask_args=args.learnable,
             wandb=args.wandb,
+            run_name=run_name,
         )
 
         if args.save_model_path:

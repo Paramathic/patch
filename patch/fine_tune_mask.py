@@ -103,6 +103,7 @@ def fine_tune_mask(
     joint_training=False,
     # Logging
     log_wandb=False,
+    run_name="",
 ):
     ...
 
@@ -154,6 +155,7 @@ def fine_tune_mask(
 
         # Logging
         log_wandb (bool): Whether to log training metrics to Weights & Biases
+        run_name (str): Name for the training run (used in logging and saving)
 
     Returns:
         None
@@ -171,9 +173,21 @@ def fine_tune_mask(
         // (dist.get_world_size() if int(os.environ.get("WORLD_SIZE", 1)) > 1 else 1)
     )
 
+    run_name += f"lr{lr}_wr{weight_reg}_sr{sparse_reg}_td{target_density}"
+    if mask_llm:
+        run_name += "_maskllm"
+    elif joint_training:
+        run_name += "_joint"
+    elif unstructured:
+        run_name += "_unstructured"
+    else:
+        run_name += f"_tile_{mask_tile_size[0]}x{mask_tile_size[1]}"
+
+    output_dir = os.path.join("saved_models", run_name)
+
     training_args = TrainingArguments(
-        output_dir="data/mask_training_output",
-        overwrite_output_dir=True,
+        output_dir=output_dir,
+        overwrite_output_dir=False,
         do_train=True,
         do_eval=False,
         per_device_train_batch_size=local_batch_size,
@@ -183,7 +197,7 @@ def fine_tune_mask(
         logging_steps=1,
         eval_steps=100,
         save_safetensors=False,
-        save_steps=500,
+        save_steps=10,
         save_total_limit=1,
         bf16=dtype is torch.bfloat16,
         fp16=dtype is not torch.bfloat16,
@@ -402,7 +416,10 @@ def fine_tune_mask(
             mask_cfg=mask_cfg,
         )
 
-        train_result = trainer.train()
+        from transformers.trainer_utils import get_last_checkpoint
+
+        last_checkpoint = get_last_checkpoint(training_args.output_dir)
+        train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
         metrics = train_result.metrics
         metrics["train_samples"] = train_samples
         trainer.log_metrics("train", metrics)
@@ -466,6 +483,7 @@ def learn_mask(
     local_files_only=False,
     hf_token=None,
     wandb=False,
+    run_name="",
 ):
     """
     Learns pruning mask on top of frozen weights
@@ -478,6 +496,7 @@ def learn_mask(
         local_files_only (bool): Whether to use local files only when loading the model
         hf_token (str or None): HuggingFace token for private models
         wandb (bool): Whether to log training metrics to Weights & Biases
+        run_name (str): Name for the training run (used in logging and saving)
 
     Returns:
         model (torch.nn.Module): The fine-tuned model
@@ -522,6 +541,7 @@ def learn_mask(
         log_wandb=wandb,
         unstructured=mask_args.unstructured,
         max_train_samples=mask_args.max_train_samples,
+        run_name=run_name,
     )
 
     return model, lm_eval_model

@@ -2,23 +2,23 @@
 
 # --- Configuration ---
 # Define the ranges for your hyperparameters
-LEARNING_RATES=("1e-2" "1e-3" "1e-4") # 0.1 0.5 0.25)
-REG_FACTORS=("3" "7") # 1 3 5)
-TEMP_PAIRS=("4 0.05" "2 0.05")
+LEARNING_RATES=("1e-2" "1e-3") # 0.1 0.5 0.25)
+REG_FACTORS=("7") # 1 3 5)
+TEMP_PAIRS=("4 0.05")
 SCALER_PAIRS=("100 500")
 TILE_TEMP_PAIRS=("4 0.05")
-TILE_SCALER_PAIRS=("25 350" "100 500")
+TILE_SCALER_PAIRS=("25 350")
 LOCAL_BATCH_SIZES_ADAM=1 # 4)
 OPTIMIZERS=("adamw_torch")
 INITIAL_SPARSITY=(0.5)
-TARGET_SPARSITY=(0.5) # 0.35)
+TARGET_SPARSITY=(0.5 0.6) # 0.35)
 COPY_DATA=false
 MASK_TILE_SIZE="1,1"
 SPARSITY_TYPE="unstructured"
 PRUNING_METHOD="wanda"
-MODEL_NAME=qwen2.5
+MODEL_NAME=llama3.2
 FINE_TUNING_SEQUENCE_LENGTH=4096
-WEIGHT_REG=("0.1" "10") # "0") # "4.25")
+WEIGHT_REG=("10") # "0") # "4.25")
 TILE_STRENGTH=("3")
 WEIGHT_STRENGTH=("3") 
 CLUSTER="trillium"
@@ -27,7 +27,7 @@ LEARNABLE_2_4_TILE=false
 MASKLLM_CHECKPOINT="Vinnnf/LLaMA-2-7B-MaskLLM-C4"
 MAX_TRAIN_SAMPLES=512000
 
-NGPUS_PER_NODE=1
+NGPUS_PER_NODE=4
 NTASKS_PER_NODE=$((12 * NGPUS_PER_NODE))
 MEM=$((64 * NGPUS_PER_NODE))
 
@@ -44,7 +44,7 @@ then
 elif [ $MODEL_NAME == 'llama3.2' ]
 then
     MODEL_PREFIX=meta-llama/Llama-3.2-
-    MODEL_SIZE_LIST="1B"
+    MODEL_SIZE_LIST="3B"
     MODEL_POSTFIX=""
 elif [ $MODEL_NAME == 'llama3.1' ]
 then
@@ -108,7 +108,7 @@ for lr in "${LEARNING_RATES[@]}"; do
                                                     # echo "  Initial Sparsity : ${init_sparsity}"
                                                     # echo "  Target Sparsity  : ${target_sparsity}"
 
-                                                    sbatch --account=def-mmehride \
+                                                    sbatch --account=rrg-mmehride \
                                                         --job-name="${JOB_NAME}" \
                                                         --gpus-per-node=${NGPUS_PER_NODE} \
                                                         --ntasks-per-node=${NTASKS_PER_NODE} \
@@ -140,7 +140,8 @@ for lr in "${LEARNING_RATES[@]}"; do
                                                         "${CLUSTER}" \
                                                         "${PARALLELISM}" \
                                                         "${LEARNABLE_2_4_TILE}" \
-                                                        "${MASKLLM_CHECKPOINT}"
+                                                        "${MASKLLM_CHECKPOINT}" \
+                                                        "${MAX_TRAIN_SAMPLES}"
 
 
                                                     ((job_count++))
