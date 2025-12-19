@@ -2,17 +2,19 @@
 <img src="./assets/PATCH-Logo.png" alt="PATCH" width="400">  
 </div>
 
-# PATCH: Learnable Tile-level Hybrid Sparsity for LLMs
+# LEAP: Learnable End-to-End Unstructured Sparsity for LLMs
 
-This repository hosts the official implementation and datasets for PATCH (Pruning with a Learnable Tile-level Configuration for Hybrid Sparsity), featured in our paper. PATCH optimizes large language models (LLMs) by learning a structured mask on frozen weights, assigning tiles as dense (0% sparsity) or 2:4 sparse (50% sparsity) to achieve flexible sparsity ratios up to 50%. It narrows the performance gap to dense models and delivers up to 1.37× speedup on LLaMA-2 7B.
 
-**PATCH: Learnable Tile-level Hybrid Sparsity for LLMs**
+LEAP optimizes large language models (LLMs) by learning a fully unstructured, per-weight sparsity mask end-to-end on frozen weights, enabling high-accuracy compression without layer-wise pruning heuristics.
 
-*Younes Hourri¹, Mohammad Mozaffari¹, Maryam Mehri Dehnavi*
+
+**LEAP: Learnable End-to-End Unstructured Sparsity for LLM**
+
+*Mohammad Mozaffari¹ and Younes Hourri¹*
 
 - *¹Equal contribution*
 
-Paper: [https://arxiv.org/abs/2509.23410](https://arxiv.org/abs/2509.23410)
+[Blog Post](https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html)
 
 <div align="center">
 <img src="./assets/PATCH-Pipeline.svg" alt="PATCH" width="800">  
@@ -74,11 +76,11 @@ tokenizer = AutoTokenizer.from_pretrained(
 
 The `lm_eval_model` is a wrapper around the model that provides a simple interface for evaluating the model on language modeling tasks. It is used in the evaluation scripts.
 
-**Sparse Mask Generation**: We use the `prepare_pruned_model` function to generate the sparse mask for the model as the prior mask for PATCH. This function takes the model, the desired sparsity ratio, and the tile size as input and returns the pruned model. 
+**Sparse Mask Generation**: We use the `prepare_pruned_model` function to initialize the sparse mask for LEAP using a one-shot unstructured pruning method as a starting point. This function takes the model, the desired sparsity ratio, and the tile size as input and returns the pruned model. 
 
 If `checkpoint_name` exists, it loads the mask from the checkpoint. Otherwise, it generates a new mask and saves it to the checkpoint.
 
-`one_shot_args` is a dictionary that contains the arguments for the one-shot pruning method. In this example, we use the Wanda method with 2:4 sparsity pattern and 50% sparsity ratio. More details about the arguments can be found in the *Function Documentation* section.
+`one_shot_args` is a dictionary that contains the arguments for the one-shot pruning method. In this example, we use the Wanda method with unstructured sparsity pattern and 60% sparsity ratio. More details about the arguments can be found in the *Function Documentation* section.
 
 
 ```python
@@ -86,8 +88,8 @@ from patch.utils import prepare_pruned_model
 
 one_shot_args = {
     "prune_method": "wanda",
-    "sparsity_type": "2:4",
-    "sparsity_ratio": 0.5,
+    "sparsity_type": "unstructured",
+    "sparsity_ratio": 0.6,
     "nsamples": 128,
     "maskllm_checkpoint": None,
     "optimizer_FT_pruning": "adamw_torch",
@@ -97,8 +99,8 @@ one_shot_args = {
     "fine_tune": False,
 }
 
-target_sparsity_ratio = 0.45
-mask_tile_size = (128, 128)
+target_sparsity_ratio = 0.6
+mask_tile_size = (1, 1) 
 
 
 compressed_model = prepare_pruned_model(
@@ -111,7 +113,7 @@ compressed_model = prepare_pruned_model(
 )
 ```
 
-**PATCH Training:** After generating the sparse mask, the model is ready for training with PATCH. `mask_args` is a dictionary that contains the arguments for the PATCH training. In this example, we use a tile size of (128, 128) and a target sparsity ratio of 45%. More details about the arguments can be found in the *Function Documentation* section.
+**LEAP Training:** After generating the sparse mask, the model is ready for training with LEAP. `mask_args` is a dictionary that contains the arguments for the LEAP training. We use a tile size of (1, 1) and a target sparsity ratio of 60%. More details about the arguments can be found in the *Function Documentation* section.
 
 
 ```python
@@ -128,10 +130,6 @@ learnable_args = {
     "lr": 1e-3,
     "sparse_reg": 7,
     "weight_reg": 10.0,
-    "temp_schedule_2_4": [4.0, 0.05],
-    "scaler_schedule_2_4": [100.0, 500.0],
-    "hard_2_4": False,
-    "prior_strength_2_4": 3.0,
     "joint_optim": False,
     "temp_schedule_tile": [4.0, 0.05],
     "scaler_schedule_tile": [25.0, 350.0],
@@ -139,6 +137,7 @@ learnable_args = {
     "prior_strength_tile": 3.0,
     "mask_llm": False,
     "layer_target": False,
+    "unstructured": True # enables LEAP: per-weight unstructured mask learning
 }
 
 model, lm_eval_model = learn_mask(
@@ -169,7 +168,7 @@ For a more automated script to run PATCH on SLURM clusters, please refer to the 
 
 ## Experimental Results
 
-We evaluate PATCH on a range of transformer models from 0.5B to 8B parameters, including Qwen-2.5, LLaMA-2, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 128 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, RACE, HellaSwag, MMLU) and perplexity (PPL) on WikiText2.
+We evaluate PATCH on a range of transformer models from 0.5B to 3B parameters, including Qwen-2.5, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 128 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, , MMLU) and perplexity (PPL) on WikiText2.
 
 ### Joint Sparse and Dense Tile Optimization (Smaller Models)
 
@@ -262,22 +261,23 @@ For LLaMA-2 7B and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , freezing sparse p
   - `hard_tile`: Whether to use hard tile selection during training.
   - `prior_strength_tile`: Prior strength for tile logits.
   - `mask_llm`: Whether to train with MaskLLM (2:4 mask only).
+  - **`unstructured`: Whether to train with LEAP (Unstructured Mask).**
   - `layer_target`: Whether to apply target sparsity per layer.
 
-
-## Speedup Experiments
-
-We will provide the scipt for integrating [STOICC](https://github.com/Paramathic/stoicc) with PATCH for speedup experiments soon.
 
 ## Acknowledgement
 This repository is build upon the [SLiM](https://github.com/Paramathic/slim) repository.
 
 ## Citation
-If you use PATCH in your research, please cite our paper:
+If you use LEAP in your research, please cite:
 ```angular2html
-@article{hourri2025patch,
-    title        = {{PATCH: One-shot Quantized Sparse Plus Low-rank Approximation of LLMs}},
-    author       = {Hourri, Younes and Mozaffari, Mohammad and Mehri Dehnavi, Maryam},
-    year         = 2025,
+@misc{mozaffari2025leap,
+  author = {Mozaffari, Mohammad and Hourri, Younes},
+  title = {LEAP: Learnable End-to-End Adaptive Pruning of LLMs},
+  year = {2025},
+  month = {December},
+  day = {17},
+  howpublished = {\url{https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html}},
+  note = {Blog post}
 }
 ```
