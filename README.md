@@ -132,7 +132,7 @@ learnable_args = {
     "scaler_schedule_2_4": [100.0, 500.0],
     "hard_2_4": False,
     "prior_strength_2_4": 3.0,
-    "joint_optim": False,
+    "joint_optim": True,
     "temp_schedule_tile": [4.0, 0.05],
     "scaler_schedule_tile": [25.0, 350.0],
     "hard_tile": False,
