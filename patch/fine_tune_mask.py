@@ -197,7 +197,7 @@ def fine_tune_mask(
         logging_steps=1,
         eval_steps=100,
         save_safetensors=False,
-        save_steps=10,
+        save_steps=100,
         save_total_limit=1,
         bf16=dtype is torch.bfloat16,
         fp16=dtype is not torch.bfloat16,
