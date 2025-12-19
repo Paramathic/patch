@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./assets/PATCH-Logo.png" alt="PATCH" width="400">  
+<img src="./assets/LEAP-Logo.png" alt="LEAP" width="400">  
 </div>
 
 # LEAP: Learnable End-to-End Unstructured Sparsity for LLMs
@@ -16,16 +16,14 @@ LEAP optimizes large language models (LLMs) by learning a fully unstructured, pe
 
 [Blog Post](https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html)
 
-<div align="center">
-<img src="./assets/PATCH-Pipeline.svg" alt="PATCH" width="800">  
-</div>
+
 
 ## Setup
 
 To clone the repository, run the following command:
 
 ```
-git clone --recurse-submodules https://github.com/Paramathic/patch.git
+git clone --branch leap --recurse-submodules https://github.com/Paramathic/patch.git
 ```
 
 The `--recurse-submodules` flag is used to clone the [SLiM repository](https://github.com/Paramathic/slim/tree/main) as a submodule. The SLiM repository is located in the `slim_local` directory.
@@ -168,48 +166,47 @@ For a more automated script to run PATCH on SLURM clusters, please refer to the 
 
 ## Experimental Results
 
-We evaluate PATCH on a range of transformer models from 0.5B to 3B parameters, including Qwen-2.5, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 128 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, , MMLU) and perplexity (PPL) on WikiText2.
+We evaluate LEAP on a range of transformer models from 0.5B to 3B parameters, including Qwen-2.5, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 128 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, , MMLU) and perplexity (PPL) on WikiText2.
 
-### Joint Sparse and Dense Tile Optimization (Smaller Models)
+### Comparative Results at 50% Sparsity Ratio
 
-For models like Qwen-2.5 0.5B, LLaMA-3.2 1B, and Gemma-3 1B, we use PATCH<sup>Joint</sup>  to optimize dense tile locations and sparsity patterns within sparse tiles.
+| Model | Method | Sparsity Ratio | PPL | MMLU | PIQA | ARC-E | ARC-C | Wino. | OBQA | Avg. |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gemma-3 1B** | Dense | 0% | 14.17 | 24.95 | 74.81 | 71.93 | 35.41 | 58.72 | 28.80 | 49.10 |
+| | Best* | 50% | 26.63 | 24.05 | 70.08 | 63.80 | 27.73 | 56.51 | 25.20 | 44.56 |
+| | LEAP | 50% | 11.89 | 23.80 | 71.27 | 63.13 | 27.90 | 60.03 | 23.20 | 44.93 |
+| **LLaMA-3.2 1B** | Dense | 0% | 9.75 | 36.92 | 74.27 | 65.53 | 31.31 | 60.30 | 26.20 | 49.09 |
+| | Best* | 50% | 17.35 | 27.92 | 69.75 | 56.06 | 26.37 | 56.04 | 22.20 | 43.05 |
+| | LEAP | 50% | 11.29 | 27.39 | 71.98 | 60.90 | 28.24 | 57.53 | 22.80 | 44.81 |
+| **LLaMA-3.2 3B** | Dense | 0% | 7.81 | 54.13 | 76.55 | 74.28 | 42.75 | 69.38 | 30.60 | 57.95 |
+| | Best* | 50% | 11.61 | 42.90 | 74.48 | 66.62 | 34.56 | 66.93 | 28.20 | 52.28 |
+| | LEAP | 50% | 8.67 | 44.55 | 75.19 | 71.09 | 39.33 | 67.48 | 29.00 | 54.44 |
+| **Qwen-2.5 0.5B** | Dense | 0% | 13.08 | 47.36 | 69.97 | 64.18 | 29.18 | 55.80 | 24.40 | 48.48 |
+| | Best* | 50% | 19.70 | 29.38 | 65.67 | 55.89 | 25.26 | 56.27 | 21.20 | 42.28 |
+| | LEAP | 50% | 14.09 | 34.37 | 68.44 | 61.99 | 26.11 | 55.25 | 21.00 | 44.53 |
 
-# Sparse vs Dense Performance
+---
+**\*Note on Best Method:** The "Best*" rows report the results for **ADMM**, which was the highest-performing baseline among Wanda, SparseGPT, Thanos, and ADMM across all evaluated models.
 
-| Sparsity | Method      | Pattern            | Qwen-2.5 0.5B<br>Acc (% ↑) | Qwen-2.5 0.5B<br>PPL (↓) | LLaMA-3.2 1B<br>Acc (% ↑) | LLaMA-3.2 1B<br>PPL (↓) | Gemma-3 1B<br>Acc (% ↑) | Gemma-3 1B<br>PPL (↓) |
-|----------|-------------|--------------------|---------------------------|--------------------------|---------------------------|--------------------------|--------------------------|--------------------------|
-| 0%       | Dense       | -                  | 46.00                     | 12.08                   | 47.70                     | 9.06                    | 47.01                    | 11.67                   |
-| 50%      | Magnitude   | 2:4                | 30.16                     | 6734.97                 | 29.66                     | 563.44                  | 31.66                    | 5005.56                 |
-|          | Wanda       | 2:4                | 32.97                     | 72.48                   | 31.61                     | 78.18                   | 34.16                    | 69.41                   |
-|          | SparseGPT   | 2:4                | 34.81                     | 36.59                   | 35.55                     | 32.73                   | 35.58                    | 44.59                   |
-|          | Thanos      | 2:4                | 31.31                     | 37.32                   | 35.71                     | 33.03                   | 35.09                    | 62.63                   |
-|          | ProxSparse  | 2:4                | 32.05                     | 111.05                  | 33.55                     | 49.33                   | 36.63                    | 90.50                   |
-|          | MaskLLM     | 2:4                | 39.33                     | 15.22                   | 41.04                     | 12.93                   | 41.84                    | 12.82                   |
-| 45%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 40.29                     | 14.57                   | 42.08                     | 12.23                   | 42.80                    | 11.96                   |
-| 35%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 41.15                     | 13.84                   | 42.72                     | 11.67                   | 43.30                    | 11.48                   |
-| 25%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 42.39                     | 13.47                   | 43.81                     | 11.00                   | 44.07                    | 11.17                   |
+### Comparative Results at 60% Sparsity Ratio
 
+| Model | Method | Sparsity Ratio | PPL | MMLU | PIQA | ARC-E | ARC-C | Wino. | OBQA | Avg. |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gemma-3 1B** | Dense | 0% | 14.17 | 24.95 | 74.81 | 71.93 | 35.41 | 58.72 | 28.80 | 49.10 |
+| | Best* | 60% | 50.55 | 25.16 | 65.29 | 55.89 | 22.69 | 53.82 | 19.60 | 40.41 |
+| | LEAP | 60% | 13.16 | 24.44 | 68.66 | 60.61 | 25.09 | 58.64 | 23.00 | 43.41 |
+| **LLaMA-3.2 1B** | Dense | 0% | 9.75 | 36.92 | 74.27 | 65.53 | 31.31 | 60.30 | 26.20 | 49.09 |
+| | Best* | 60% | 33.87 | 25.77 | 64.15 | 47.22 | 22.44 | 54.62 | 18.20 | 38.73 |
+| | LEAP | 60% | 13.06 | 24.90 | 69.70 | 57.53 | 25.60 | 55.80 | 21.00 | 42.42 |
+| **LLaMA-3.2 3B** | Dense | 0% | 7.81 | 54.13 | 76.55 | 74.28 | 42.75 | 69.38 | 30.60 | 57.95 |
+| | Best* | 60% | 19.14 | 33.46 | 69.15 | 57.70 | 27.39 | 59.82 | 22.40 | 44.99 |
+| | LEAP | 60% | 9.77 | 37.55 | 74.32 | 66.50 | 34.81 | 63.14 | 26.00 | 50.39 |
+| **Qwen-2.5 0.5B** | Dense | 0% | 13.08 | 47.36 | 69.97 | 64.18 | 29.18 | 55.80 | 24.40 | 48.48 |
+| | Best* | 60% | 33.41 | 24.22 | 62.40 | 50.13 | 22.44 | 52.96 | 17.80 | 38.33 |
+| | LEAP | 60% | 15.66 | 24.66 | 67.90 | 56.69 | 25.09 | 55.49 | 19.40 | 41.53 |
 
-PATCH<sup>Joint</sup>  provides a flexible sparsity-accuracy tradeoff, narrowing the gap to dense performance while maintaining hardware-friendly patterns.
-
-
-Memory-Efficient Tile Selection (Larger Models)
-For LLaMA-2 7B and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , freezing sparse patterns and optimizing only dense tile selections for reduced memory overhead.
-
-# Sparse vs Dense Performance (LLaMA Models)
-
-| Sparsity | Method     | Pattern          | LLaMA-2 7B<br>Acc (% ↑) | LLaMA-2 7B<br>PPL (↓) | LLaMA-3.1 8B<br>Acc (% ↑) | LLaMA-3.1 8B<br>PPL (↓) |
-|----------|------------|------------------|-------------------------|-----------------------|---------------------------|--------------------------|
-| 0%       | Dense      | -                | 54.61                   | 5.12                  | 60.31                     | 5.84                     |
-| 50%      | Magnitude  | 2:4              | 43.44                   | 54.39                 | 35.93                     | 765.92                   |
-|          | Wanda      | 2:4              | 44.30                   | 11.15                 | 41.77                     | 21.29                    |
-|          | SparseGPT  | 2:4              | 45.09                   | 10.12                 | 45.53                     | 15.11                    |
-|          | Thanos     | 2:4              | 44.80                   | 11.19                 | 45.72                     | 16.09                    |
-|          | ProxSparse | 2:4              | 45.92                   | 9.18                  | 45.14                     | 15.17                    |
-|          | MaskLLM    | 2:4              | 48.62                   | 6.78                  | 52.80                     | 8.58                     |
-| 45%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 48.99                   | 6.55                  | 53.60                     | 8.20                     |
-| 35%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 50.08                   | 6.18                  | 55.28                     | 7.89                     |
-| 25%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 51.58                   | 5.86                  | 56.48                     | 7.34                     |
+---
+**\*Note on Best Method:** The "Best*" rows report the results for **ADMM**, which was the highest-performing baseline among Wanda, SparseGPT, Thanos, and ADMM across all evaluated models.
 
 
 ## Function Documentation
