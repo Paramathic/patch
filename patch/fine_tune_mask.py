@@ -1,4 +1,5 @@
 import os
+import hashlib
 import torch
 import transformers
 from transformers import (
@@ -22,6 +23,7 @@ from .mask_trainer import *
 import os
 from slim_local.utils.model import get_llm, distribute_model
 from .utils import Args
+from transformers.trainer_utils import get_last_checkpoint
 
 
 def apply_checkpointing_to_layers_methodtype(layers):
@@ -61,6 +63,59 @@ def dense_linear_forward(module, input):
     linear layer without any masking.
     """
     return torch.nn.functional.linear(input, module.weight, module.bias)
+
+
+def _build_run_name(model, cfg, max_len=240):
+    """
+    Build a compact, descriptive output directory name capturing model
+    identity and the hyperparameters controllable from submit_jobs.sh.
+    Falls back to hash-suffix truncation if the limit is exceeded.
+    """
+    raw_name = getattr(getattr(model, "config", None), "_name_or_path", "") or "model"
+    model_tag = os.path.basename(raw_name.rstrip("/")) or "model"
+
+    opt_short = {"adamw_torch": "adamw", "adafactor": "adaf"}.get(
+        cfg["optimizer"], cfg["optimizer"]
+    )
+    mode_tag = (
+        "maskllm" if cfg["mask_llm"]
+        else ("joint" if cfg["joint_training"] else "tile")
+    )
+
+    def rng(r):
+        return f"{r[0]}-{r[1]}"
+
+    parts = [
+        model_tag,
+        mode_tag,
+        f"td{cfg['target_density']}",
+        f"lr{cfg['lr']}",
+        f"opt-{opt_short}",
+        f"lbs{cfg['local_batch_size']}",
+        f"gbs{cfg['global_batch_size']}",
+        f"ep{cfg['epochs']}",
+        f"seq{cfg['sequence_length']}",
+        f"wr{cfg['weight_reg']}",
+        f"sr{cfg['sparse_reg']}",
+        f"t24-{rng(cfg['temp_range_2_4'])}",
+        f"s24-{rng(cfg['scaler_range_2_4'])}",
+        f"tt-{rng(cfg['temp_range_tile'])}",
+        f"st-{rng(cfg['scaler_range_tile'])}",
+        f"p24-{cfg['prior_strength_2_4']}",
+        f"pt-{cfg['prior_strength_tile']}",
+        f"tile-{cfg['mask_tile_size'][0]}x{cfg['mask_tile_size'][1]}",
+        f"lt{int(bool(cfg['layer_target']))}",
+        f"h24-{int(bool(cfg['hard_2_4']))}",
+        f"ht-{int(bool(cfg['hard_tile']))}",
+    ]
+
+    name = "_".join(str(p) for p in parts).replace("/", "-").replace(" ", "")
+
+    if len(name) > max_len:
+        digest = hashlib.md5(name.encode()).hexdigest()[:8]
+        keep = max_len - len(digest) - 1
+        name = f"{name[:keep]}_{digest}"
+    return name
 
 
 def fine_tune_mask(
@@ -169,8 +224,11 @@ def fine_tune_mask(
         // (dist.get_world_size() if int(os.environ.get("WORLD_SIZE", 1)) > 1 else 1)
     )
 
+    # Include model name and all hyperparameters in the output directory name for better organization of wandb runs and checkpoints
+    output_dir = f"data/{_build_run_name(model, locals())}"
+
     training_args = TrainingArguments(
-        output_dir="data/mask_training_output",
+        output_dir=output_dir,
         overwrite_output_dir=True,
         do_train=True,
         do_eval=False,
@@ -181,7 +239,7 @@ def fine_tune_mask(
         logging_steps=1,
         eval_steps=100,
         save_safetensors=False,
-        save_steps=500,
+        save_steps=100,
         save_total_limit=1,
         bf16=dtype is torch.bfloat16,
         fp16=dtype is not torch.bfloat16,
@@ -378,7 +436,8 @@ def fine_tune_mask(
             mask_cfg=mask_cfg,
         )
 
-        train_result = trainer.train()
+        last_checkpoint = get_last_checkpoint(training_args.output_dir)
+        train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
         metrics = train_result.metrics
         metrics["train_samples"] = train_samples
         trainer.log_metrics("train", metrics)
