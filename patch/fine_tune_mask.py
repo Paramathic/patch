@@ -229,7 +229,17 @@ def fine_tune_mask(
     )
 
     # Include model name and all hyperparameters in the output directory name for better organization of wandb runs and checkpoints
-    output_dir = f"data/{_build_run_name(model, locals())}"
+    run_name += f"lr{lr}_wr{weight_reg}_sr{sparse_reg}_td{target_density}"
+    if mask_llm:
+        run_name += "_maskllm"
+    elif joint_training:
+        run_name += "_joint"
+    elif unstructured:
+        run_name += "_unstructured"
+    else:
+        run_name += f"_tile_{mask_tile_size[0]}x{mask_tile_size[1]}"
+
+    output_dir = os.path.join("saved_models", run_name)
 
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -243,7 +253,6 @@ def fine_tune_mask(
         logging_steps=1,
         eval_steps=100,
         save_safetensors=False,
-        save_steps=100,
         save_steps=100,
         save_total_limit=1,
         bf16=dtype is torch.bfloat16,
