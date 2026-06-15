@@ -2,21 +2,33 @@
 <img src="./assets/LEAP-Logo.png" alt="LEAP" width="400">  
 </div>
 
-# LEAP: Learnable End-to-End Unstructured Sparsity for LLMs
+# LEAP: Learnable End-to-End Adaptive Pruning of Large Language Models
 
 
 LEAP optimizes large language models (LLMs) by learning a fully unstructured, per-weight sparsity mask end-to-end on frozen weights, enabling high-accuracy compression without layer-wise pruning heuristics.
 
 
-**LEAP: Learnable End-to-End Unstructured Sparsity for LLM**
+**LEAP: Learnable End-to-End Adaptive Pruning of Large Language Models**
 
-*Mohammad Mozaffari¹ and Younes Hourri¹*
+*Mohammad Mozaffari, Younes Hourri, Mohammad Rastegari, and Mahyar Najibi*
 
-- *¹Equal contribution*
+> 📢 Accepted at the **ICML 2026 Workshop on Resource-Adaptive Foundation Model Inference (AdaptFM)** (Poster).
 
-[Blog Post](https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html)
+[![arXiv](https://img.shields.io/badge/arXiv-2605.17289-b31b1b.svg)](https://arxiv.org/abs/2605.17289)
+[![OpenReview](https://img.shields.io/badge/OpenReview-tIsX30TADF-blue.svg)](https://openreview.net/forum?id=tIsX30TADF)
+[![ICML 2026](https://img.shields.io/badge/ICML%202026-AdaptFM-9cf.svg)](https://icml.cc/virtual/2026/75125)
+
+[Paper (arXiv)](https://arxiv.org/abs/2605.17289) · [OpenReview](https://openreview.net/forum?id=tIsX30TADF) · [ICML Page](https://icml.cc/virtual/2026/75125) · [Blog Post](https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html)
 
 
+
+## Overview
+
+<div align="center">
+<img src="./assets/LEAP-Overview.png" alt="LEAP method overview" width="900">
+</div>
+
+LEAP places a per-weight Bernoulli gate on the frozen pretrained weights and relaxes it with a Gumbel-sigmoid (binary concrete) distribution. The gate logits Θ are warm-started from a magnitude prior and trained end-to-end against the task loss — only the gates are learned, the weights stay frozen — while a global sparsity-budget regularizer and a weight-aware term shape the mask. Annealing the temperature τ → 0 drives the relaxed gates to a hard binary mask M ∈ {0, 1}, which is applied to produce the final sparse model.
 
 ## Setup
 
@@ -267,14 +279,12 @@ This repository is build upon the [SLiM](https://github.com/Paramathic/slim) rep
 
 ## Citation
 If you use LEAP in your research, please cite:
-```angular2html
-@misc{mozaffari2025leap,
-  author = {Mozaffari, Mohammad and Hourri, Younes},
-  title = {LEAP: Learnable End-to-End Adaptive Pruning of LLMs},
-  year = {2025},
-  month = {December},
-  day = {17},
-  howpublished = {\url{https://www.cs.toronto.edu/~mmozaffari/compression-trinity/leap/index.html}},
-  note = {Blog post}
+```bibtex
+@inproceedings{mozaffari2026leap,
+  title     = {LEAP: Learnable End-to-End Adaptive Pruning of Large Language Models},
+  author    = {Mozaffari, Mohammad and Hourri, Younes and Rastegari, Mohammad and Najibi, Mahyar},
+  booktitle = {ICML 2026 Workshop on Resource-Adaptive Foundation Model Inference (AdaptFM)},
+  year      = {2026},
+  url        = {https://openreview.net/forum?id=tIsX30TADF}
 }
 ```
