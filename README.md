@@ -20,7 +20,7 @@ Paper: [https://arxiv.org/abs/2509.23410](https://arxiv.org/abs/2509.23410)
 
 ## News
 
-- **[Jul 2026]** 🎉 We released the **PATCH and MaskLLM mask-only checkpoints** on the HuggingFace Hub! We distribute *only the learned binary masks* (no weights) — apply them on top of the original base models to reproduce our sparse models. Browse them on the [🤗 mohammad-mozaffari](https://huggingface.co/mohammad-mozaffari) profile; per-checkpoint links (🤗) are in the [results tables](#sparse-vs-dense-performance) below.
+- **[Jul 2026]** 🎉 We released the **PATCH and MaskLLM mask-only checkpoints** on the HuggingFace Hub! We distribute *only the learned binary masks* (no weights) — apply them on top of the original base models to reproduce our sparse models. Browse them in the [🤗 PATCH Collection](https://huggingface.co/collections/mohammad-mozaffari/patch); per-checkpoint links (🤗) are in the [results tables](#sparse-vs-dense-performance) below.
 
 ## Setup
 
@@ -222,8 +222,8 @@ For LLaMA-2 7B, LLaMA-2 13B, and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , fre
 ## Released Checkpoints (Masks)
 
 We release the learned **masks only** (no base-model weights) for both PATCH and
-the MaskLLM baselines on the [🤗 mohammad-mozaffari](https://huggingface.co/mohammad-mozaffari)
-Hub. Repositories are named `MODEL-METHOD-SPARSITYSparse`
+the MaskLLM baselines in the [🤗 PATCH Collection](https://huggingface.co/collections/mohammad-mozaffari/patch)
+on the HuggingFace Hub. Repositories are named `MODEL-METHOD-SPARSITYSparse`
 (e.g. `gemma_3_1b-PATCH-45Sparse`, `llama_3.2_1b-MaskLLM-50Sparse`). Since PATCH
 keeps the base weights frozen, applying a released mask on top of the original
 base model exactly reproduces our sparse model.
