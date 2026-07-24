@@ -18,6 +18,10 @@ Paper: [https://arxiv.org/abs/2509.23410](https://arxiv.org/abs/2509.23410)
 <img src="./assets/PATCH-Pipeline.svg" alt="PATCH" width="800">  
 </div>
 
+## News
+
+- **[Jul 2026]** 🎉 We released the **PATCH and MaskLLM mask-only checkpoints** on the HuggingFace Hub! We distribute *only the learned binary masks* (no weights) — apply them on top of the original base models to reproduce our sparse models. Browse them on the [🤗 mohammad-mozaffari](https://huggingface.co/mohammad-mozaffari) profile; per-checkpoint links (🤗) are in the [results tables](#sparse-vs-dense-performance) below.
+
 ## Setup
 
 To clone the repository, run the following command:
@@ -169,13 +173,15 @@ For a more automated script to run PATCH on SLURM clusters, please refer to the 
 
 ## Experimental Results
 
-We evaluate PATCH on a range of transformer models from 0.5B to 8B parameters, including Qwen-2.5, LLaMA-2, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 128 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, RACE, HellaSwag, MMLU) and perplexity (PPL) on WikiText2.
+We evaluate PATCH on a range of transformer models from 0.5B to 8B parameters, including Qwen-2.5, LLaMA-2, LLaMA-3, and Gemma-3 families. Models are trained on the SlimPajama dataset for 2000 steps with batch size 256 and sequence length 4096. Evaluation includes average accuracy across eight zero-shot tasks (PIQA, ARC-Easy, ARC-Challenge, Winogrande, OpenBookQA, RACE, HellaSwag, MMLU) and perplexity (PPL) on WikiText2.
 
 ### Joint Sparse and Dense Tile Optimization (Smaller Models)
 
 For models like Qwen-2.5 0.5B, LLaMA-3.2 1B, and Gemma-3 1B, we use PATCH<sup>Joint</sup>  to optimize dense tile locations and sparsity patterns within sparse tiles.
 
 # Sparse vs Dense Performance
+
+🤗 = mask-only checkpoint released on the HuggingFace Hub (click to open the model card).
 
 | Sparsity | Method      | Pattern            | Qwen-2.5 0.5B<br>Acc (% ↑) | Qwen-2.5 0.5B<br>PPL (↓) | LLaMA-3.2 1B<br>Acc (% ↑) | LLaMA-3.2 1B<br>PPL (↓) | Gemma-3 1B<br>Acc (% ↑) | Gemma-3 1B<br>PPL (↓) |
 |----------|-------------|--------------------|---------------------------|--------------------------|---------------------------|--------------------------|--------------------------|--------------------------|
@@ -185,33 +191,72 @@ For models like Qwen-2.5 0.5B, LLaMA-3.2 1B, and Gemma-3 1B, we use PATCH<sup>Jo
 |          | SparseGPT   | 2:4                | 34.81                     | 36.59                   | 35.55                     | 32.73                   | 35.58                    | 44.59                   |
 |          | Thanos      | 2:4                | 31.31                     | 37.32                   | 35.71                     | 33.03                   | 35.09                    | 62.63                   |
 |          | ProxSparse  | 2:4                | 32.05                     | 111.05                  | 33.55                     | 49.33                   | 36.63                    | 90.50                   |
-|          | MaskLLM     | 2:4                | 39.33                     | 15.22                   | 41.04                     | 12.93                   | 41.84                    | 12.82                   |
-| 45%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 40.29                     | 14.57                   | 42.08                     | 12.23                   | 42.80                    | 11.96                   |
-| 35%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 41.15                     | 13.84                   | 42.72                     | 11.67                   | 43.30                    | 11.48                   |
-| 25%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 42.39                     | 13.47                   | 43.81                     | 11.00                   | 44.07                    | 11.17                   |
+|          | MaskLLM     | 2:4                | 39.33                     | 15.22                   | 41.04 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.2_1b-MaskLLM-50Sparse) | 12.93                   | 41.84 [🤗](https://huggingface.co/mohammad-mozaffari/gemma_3_1b-MaskLLM-50Sparse) | 12.82                   |
+| 45%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 40.29 [🤗](https://huggingface.co/mohammad-mozaffari/qwen2.5_0.5b-PATCH-45Sparse) | 14.57                   | 42.08 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.2_1b-PATCH-45Sparse) | 12.23                   | 42.80 [🤗](https://huggingface.co/mohammad-mozaffari/gemma_3_1b-PATCH-45Sparse) | 11.96                   |
+| 35%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 41.15 [🤗](https://huggingface.co/mohammad-mozaffari/qwen2.5_0.5b-PATCH-35Sparse) | 13.84                   | 42.72 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.2_1b-PATCH-35Sparse) | 11.67                   | 43.30 [🤗](https://huggingface.co/mohammad-mozaffari/gemma_3_1b-PATCH-35Sparse) | 11.48                   |
+| 25%      | PATCH<sup>Joint</sup>   | Dense/2:4 Tiles    | 42.39 [🤗](https://huggingface.co/mohammad-mozaffari/qwen2.5_0.5b-PATCH-25Sparse) | 13.47                   | 43.81 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.2_1b-PATCH-25Sparse) | 11.00                   | 44.07 [🤗](https://huggingface.co/mohammad-mozaffari/gemma_3_1b-PATCH-25Sparse) | 11.17                   |
 
 
 PATCH<sup>Joint</sup>  provides a flexible sparsity-accuracy tradeoff, narrowing the gap to dense performance while maintaining hardware-friendly patterns.
 
 
 Memory-Efficient Tile Selection (Larger Models)
-For LLaMA-2 7B and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , freezing sparse patterns and optimizing only dense tile selections for reduced memory overhead.
+For LLaMA-2 7B, LLaMA-2 13B, and LLaMA-3.1 8B, we use PATCH<sup>Tile</sup> , freezing sparse patterns and optimizing only dense tile selections for reduced memory overhead.
 
 # Sparse vs Dense Performance (LLaMA Models)
 
-| Sparsity | Method     | Pattern          | LLaMA-2 7B<br>Acc (% ↑) | LLaMA-2 7B<br>PPL (↓) | LLaMA-3.1 8B<br>Acc (% ↑) | LLaMA-3.1 8B<br>PPL (↓) |
-|----------|------------|------------------|-------------------------|-----------------------|---------------------------|--------------------------|
-| 0%       | Dense      | -                | 54.61                   | 5.12                  | 60.31                     | 5.84                     |
-| 50%      | Magnitude  | 2:4              | 43.44                   | 54.39                 | 35.93                     | 765.92                   |
-|          | Wanda      | 2:4              | 44.30                   | 11.15                 | 41.77                     | 21.29                    |
-|          | SparseGPT  | 2:4              | 45.09                   | 10.12                 | 45.53                     | 15.11                    |
-|          | Thanos     | 2:4              | 44.80                   | 11.19                 | 45.72                     | 16.09                    |
-|          | ProxSparse | 2:4              | 45.92                   | 9.18                  | 45.14                     | 15.17                    |
-|          | MaskLLM    | 2:4              | 48.62                   | 6.78                  | 52.80                     | 8.58                     |
-| 45%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 48.99                   | 6.55                  | 53.60                     | 8.20                     |
-| 35%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 50.08                   | 6.18                  | 55.28                     | 7.89                     |
-| 25%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 51.58                   | 5.86                  | 56.48                     | 7.34                     |
+| Sparsity | Method     | Pattern          | LLaMA-2 7B<br>Acc (% ↑) | LLaMA-2 7B<br>PPL (↓) | LLaMA-2 13B<br>Acc (% ↑) | LLaMA-2 13B<br>PPL (↓) | LLaMA-3.1 8B<br>Acc (% ↑) | LLaMA-3.1 8B<br>PPL (↓) |
+|----------|------------|------------------|-------------------------|-----------------------|--------------------------|-------------------------|---------------------------|--------------------------|
+| 0%       | Dense      | -                | 54.61                   | 5.12                  | 58.38                    | 4.89                    | 60.31                     | 5.84                     |
+| 50%      | Magnitude  | 2:4              | 43.44                   | 54.39                 | 45.94                    | 8.89                    | 35.93                     | 765.92                   |
+|          | Wanda      | 2:4              | 44.30                   | 11.15                 | 47.95                    | 8.91                    | 41.77                     | 21.29                    |
+|          | SparseGPT  | 2:4              | 45.09                   | 10.12                 | 49.67                    | 8.86                    | 45.53                     | 15.11                    |
+|          | Thanos     | 2:4              | 44.80                   | 11.19                 | 49.33                    | 8.80                    | 45.72                     | 16.09                    |
+|          | ProxSparse | 2:4              | 45.92                   | 9.18                  | 50.80                    | 7.11                    | 45.14                     | 15.17                    |
+|          | MaskLLM    | 2:4              | 48.62                   | 6.78                  | N/A                      | N/A                     | 52.80                     | 8.58                     |
+| 45%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 48.99 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_7b-PATCH-45Sparse) | 6.55                  | 53.24 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_13b-PATCH-45Sparse) | 5.85                    | 53.60 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.1_8b-PATCH-45Sparse) | 8.20                     |
+| 35%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 50.08 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_7b-PATCH-35Sparse) | 6.18                  | 54.60 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_13b-PATCH-35Sparse) | 5.44                    | 55.28 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.1_8b-PATCH-35Sparse) | 7.89                     |
+| 25%      | PATCH<sup>Tile</sup>   | Dense/2:4 Tiles  | 51.58 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_7b-PATCH-25Sparse) | 5.86                  | 56.31 [🤗](https://huggingface.co/mohammad-mozaffari/llama_2_13b-PATCH-25Sparse) | 5.00                    | 56.48 [🤗](https://huggingface.co/mohammad-mozaffari/llama_3.1_8b-PATCH-25Sparse) | 7.34                     |
 
+
+## Released Checkpoints (Masks)
+
+We release the learned **masks only** (no base-model weights) for both PATCH and
+the MaskLLM baselines on the [🤗 mohammad-mozaffari](https://huggingface.co/mohammad-mozaffari)
+Hub. Repositories are named `MODEL-METHOD-SPARSITYSparse`
+(e.g. `gemma_3_1b-PATCH-45Sparse`, `llama_3.2_1b-MaskLLM-50Sparse`). Since PATCH
+keeps the base weights frozen, applying a released mask on top of the original
+base model exactly reproduces our sparse model.
+
+Available checkpoints:
+- **PATCH** (25% / 35% / 45% sparsity, mask only): `qwen2.5_0.5b`, `llama_3.2_1b`, `gemma_3_1b`, `llama_2_7b`, `llama_2_13b`, `llama_3.1_8b`
+- **MaskLLM** (50% 2:4 baseline): `gemma_3_1b`, `llama_3.2_1b`, `llama_3.2_3b`
+
+```python
+from huggingface_hub import hf_hub_download
+from transformers import AutoModelForCausalLM
+import torch
+from scripts.release.load_patch_mask import apply_patch_mask
+
+npz = hf_hub_download(repo_id="mohammad-mozaffari/gemma_3_1b-PATCH-45Sparse", filename="mask.npz")
+model = AutoModelForCausalLM.from_pretrained("google/gemma-3-1b-pt", torch_dtype=torch.bfloat16)
+apply_patch_mask(model, npz)  # zeroes the pruned weights in place
+```
+
+The masks are packaged and uploaded with [`scripts/release/build_release.py`](scripts/release/build_release.py):
+
+```bash
+# Preview one repo locally (writes README + mask.npz, no upload):
+python scripts/release/build_release.py --only gemma_3_1b-PATCH-45Sparse
+
+# Publish everything to the Hub:
+HF_TOKEN=hf_xxx python scripts/release/build_release.py --push
+```
+
+Each mask is distributed under its **base model's license** (Apache-2.0 for
+Qwen-2.5; the Llama 2 / 3.1 / 3.2 Community Licenses for the LLaMA models; the
+Gemma Terms of Use for Gemma-3). You must obtain the base model separately and
+comply with its license. The mask-generation code is MIT-licensed.
 
 ## Function Documentation
 
